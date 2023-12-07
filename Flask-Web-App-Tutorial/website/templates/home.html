@@ -14,6 +14,9 @@
                 <br>
                 <small class="text-muted">Posted by {{ user.first_name }} on {{ note.date.strftime('%B %d, %Y %I:%M %p') }}</small>
             </div>
+        </button>
+        <button type="button" class="edit" onclick="updateNotePrompt({{ note.id }})">
+        </button>
             <button type="button" class="close" onclick="confirmDelete({{ note.id }})">
                 <span aria-hidden="true">&times;</span>
             </button>
@@ -32,7 +35,7 @@
 
 <script>
     function confirmDelete(noteId) {
-        // Show a confirmation dialog
+      
         if (confirm("Are you sure you want to delete this post?")) {
             deleteNote(noteId);
         }
@@ -46,5 +49,23 @@
             window.location.href = "/";
         });
     }
+    function updateNotePrompt(noteId) {
+        const updatedContent = prompt("HAHAHAHAHAHAHAH WAY KLASE LEZGOOO(TRY DAW EDITT OG MO GANA ):");
+        if (updatedContent !== null) {
+            updateNote(noteId, updatedContent);
+        }
+    }
+
+    function updateNote(noteId, updatedContent) {
+        fetch("/update-note", {
+            method: "POST",
+            body: JSON.stringify({ noteId: noteId, updatedContent: updatedContent }),
+        }).then((_res) => {
+           
+            window.location.href = "/";
+        });
+    }
+
+    
 </script>
 {% endblock %}

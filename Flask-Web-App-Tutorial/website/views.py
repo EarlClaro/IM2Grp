@@ -21,10 +21,10 @@ def home():
             db.session.add(new_note)
             db.session.commit()
             
-            # Get the current user's first name
+           
             user_first_name = current_user.first_name
 
-            # Get the date when the note was posted and format it
+            
             note_date = datetime.utcnow().strftime('%B %d, %Y %I:%M %p')
 
             flash(f'{user_first_name} posted on {note_date}', category='success')
@@ -34,7 +34,7 @@ def home():
 
 @views.route('/delete-note', methods=['POST'])
 def delete_note():  
-    note = json.loads(request.data) # this function expects a JSON from the INDEX.js file 
+    note = json.loads(request.data)
     noteId = note['noteId']
     note = Note.query.get(noteId)
     if note:
@@ -43,3 +43,18 @@ def delete_note():
             db.session.commit()
 
     return jsonify({})
+
+@views.route('/update-note', methods=['POST'])
+def update_note():
+    data = json.loads(request.data)
+    note_id = data.get('noteId')
+    updated_content = data.get('updatedContent')
+
+    note = Note.query.get(note_id)
+
+    if note and note.user_id == current_user.id:
+        note.data = updated_content
+        db.session.commit()
+        return jsonify({"message": "Note updated successfully"})
+    else:
+        return jsonify({"error": "Unable to update note"})
