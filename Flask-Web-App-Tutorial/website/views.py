@@ -3,6 +3,8 @@ from flask_login import login_required, current_user
 from .models import Note
 from datetime import datetime
 from . import db
+from flask import redirect, url_for
+from werkzeug.security import generate_password_hash
 import json
 
 views = Blueprint('views', __name__)
@@ -58,3 +60,31 @@ def update_note():
         return jsonify({"message": "Note updated successfully"})
     else:
         return jsonify({"error": "Unable to update note"})
+    
+@views.route('/profile')
+@login_required
+def profile():
+    return render_template("profile.html", user=current_user)
+
+
+@views.route('/update-profile', methods=['POST'])
+@login_required
+def update_profile():
+    if request.method == 'POST':
+        new_email = request.form.get('email')
+        new_password = request.form.get('password')
+        new_first_name = request.form.get('first_name')
+
+        if new_email:
+            current_user.email = new_email
+
+        if new_password:
+            current_user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
+
+        if new_first_name:
+            current_user.first_name = new_first_name
+
+        db.session.commit()
+        flash('Profile updated successfully!', category='success')
+
+    return redirect(url_for('views.profile'))
