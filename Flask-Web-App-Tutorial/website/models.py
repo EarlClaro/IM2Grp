@@ -1,7 +1,7 @@
 from . import db
 from flask_login import UserMixin
 from sqlalchemy.sql import func
-
+import pytz  # Make sure to install it with: pip install pytz
 
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -9,6 +9,12 @@ class Note(db.Model):
     date = db.Column(db.DateTime(timezone=True), default=func.now())
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
+    def save_with_philippines_timezone(self):
+        philippines_timezone = pytz.timezone('Asia/Manila')
+        localized_time = self.date.astimezone(philippines_timezone)
+        self.date = localized_time
+        db.session.add(self)
+        db.session.commit()
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
