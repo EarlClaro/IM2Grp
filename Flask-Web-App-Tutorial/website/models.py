@@ -1,24 +1,26 @@
-from . import db
 from flask_login import UserMixin
-from sqlalchemy.sql import func
-import pytz  # Make sure to install it with: pip install pytz
-
-class Note(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.String(10000))
-    date = db.Column(db.DateTime(timezone=True), default=func.now())
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-
-    def save_with_philippines_timezone(self):
-        philippines_timezone = pytz.timezone('Asia/Manila')
-        localized_time = self.date.astimezone(philippines_timezone)
-        self.date = localized_time
-        db.session.add(self)
-        db.session.commit()
+from . import db
 
 class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(150), unique=True)
-    password = db.Column(db.String(150))
-    first_name = db.Column(db.String(150))
-    notes = db.relationship('Note')
+    userid = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(50), nullable=False)
+    password = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+
+class Category(db.Model):
+    categoryID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    userid = db.Column(db.Integer, db.ForeignKey('user.userid'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    user = db.relationship('User', backref='categories', lazy=True)
+
+class Note(db.Model):
+    noteID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    userid = db.Column(db.Integer, db.ForeignKey('user.userid'), nullable=False)
+    categoryID = db.Column(db.Integer, db.ForeignKey('category.categoryID'))
+    title = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.TIMESTAMP, default=db.func.current_timestamp())
+    updated_at = db.Column(db.TIMESTAMP, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+    user = db.relationship('User', backref='notes', lazy=True)
+    category = db.relationship('Category', backref='notes', lazy=True)

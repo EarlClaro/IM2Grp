@@ -1,17 +1,22 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from os import path
+from flask_mysqldb import MySQL
 from flask_login import LoginManager
+from os import path
 
-db = SQLAlchemy()
-DB_NAME = "database.db"
-
+mysql = MySQL()
+DB_NAME = "notes"
+DB_USER = "root"
+DB_PASSWORD = "July82001Cl@ro"
+DB_HOST = "localhost"
 
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'hjshjhdjah kjshkjdhjs'
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
-    db.init_app(app)
+    app.config['MYSQL_USER'] = DB_USER
+    app.config['MYSQL_PASSWORD'] = DB_PASSWORD
+    app.config['MYSQL_DB'] = DB_NAME
+    app.config['MYSQL_HOST'] = DB_HOST
+    mysql.init_app(app)
 
     from .views import views
     from .auth import auth
@@ -20,9 +25,14 @@ def create_app():
     app.register_blueprint(auth, url_prefix='/')
 
     from .models import User, Note
-    
+
     with app.app_context():
-        db.create_all()
+        # Load and execute schema.sql
+        with app.open_resource('schema.sql', mode='r') as f:
+            cursor = mysql.connection.cursor()
+            cursor.execute(f.read(), multi=True)
+            mysql.connection.commit()
+            cursor.close()
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
@@ -32,10 +42,6 @@ def create_app():
     def load_user(id):
         return User.query.get(int(id))
 
+    print(f"Database connection established: {app.config['MYSQL_DB']}")
+
     return app
-
-
-def create_database(app):
-    if not path.exists('website/' + DB_NAME):
-        db.create_all(app=app)
-        print('Created Database!')
